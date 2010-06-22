@@ -8,11 +8,12 @@
 #TODO: process subdirectories of movies
 #TODO: create txt and html lists of movies: genre, actor, producer, director listings
 #TODO: manual editing of attributes
-import os, re, xattr, sys
+import os, re, xattr, sys, string
 from datetime import *
 import time
 import urllib2
 from stat import *
+import wikipedia
 
 # Config
 movie_dir = sys.argv[1] # TODO: getopt
@@ -34,8 +35,6 @@ movie_url_mark = ':wikiurl'
 user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)' 
 fetch_headers = {'User-Agent' : user_agent} 
 
-wikipedia_read_pattern = re.compile(r'^http\://en.wikipedia.org/wiki/(.*)(\?.*)?$', re.IGNORECASE)
-
 video_file_pattern = re.compile(r'(.*)\.(avi|mp4|m4v|divx|mpeg)$', re.IGNORECASE)
 director_match = re.compile(r'\|\s*director\s*\=\s*(?:\{\{Unbulleted list\|\{\{ubl\||)?\s*([^\r\n]+)\s*(?:\}\})?', re.IGNORECASE)
 title_match = re.compile(r'\|\s*name\s*\=\s*([^\r\n]+)', re.IGNORECASE)
@@ -45,6 +44,8 @@ year_match = re.compile(r'\|\s*released\s*\=\s*\{\{start date\|([0-9]+)\|([0-9]+
 year_match2 = re.compile(r'\|\s*released\s*\=\s*[a-zA-Z]+\s*([0-9]{1,2}\,\s*)?([0-9]{4})', re.IGNORECASE) # year M D, Y
 year_match3 = re.compile(r'\|\s*released\s*\=\s*\'+\[\[.*\]\]\:\'+\s*([0-9]{1,2}\s*)?[a-zA-Z]+\s*([0-9]{1,2}\,\s*)?([0-9]{4})', re.IGNORECASE) # multiple years
 disc_no_match = re.compile(r'CD([0-9]+)', re.IGNORECASE)
+
+file_part_match = re.compile(r'^.*/([^/]+)\.[a-z0-9]+$', re.IGNORECASE)
 
 # Name will match: names with or without [[ ]]; names separated by <br />; names listed as uncredited
 # First parethenthesis: [[, ''', br, or beginning of string
@@ -58,6 +59,7 @@ name_match = re.compile(r'(\[\[|br />\s*|\'\'\'|\||^)([^\[\]\<\>\(\)\|\{\}]+[^\[
 # Common functions
 def listdir_fullpath(d):
     return [os.path.join(d, f) for f in os.listdir(d)]
+
 def movie_get_tags(movie, attributes):
 	movie_director = ''
 	movie_title = ''
@@ -68,14 +70,16 @@ def movie_get_tags(movie, attributes):
 	movie_discno = ''
 
 	if (script_domain+movie_url_mark) not in attributes:
-		url = raw_input("Wikipedia edit URL > ")
+		m = file_part_match.findall(movie)
+		url = wikipedia.find_movie_page(string.capwords(m[0]))
+		if url == '':
+			url = raw_input("Wikipedia edit URL > ")
+		else:
+			url = 'http://en.wikipedia.org/w/index.php?title='+url+'&action=edit'
 	else:
 		url = attributes.get(script_domain+movie_url_mark)
 
-	# Is URL a "read" page, not an "edit" page?
-	m = wikipedia_read_pattern.findall(url)
-	if m != []:
-		url = 'http://en.wikipedia.org/w/index.php?title='+m[0][0]+'&action=edit'
+	url = wikipedia.edit_page(url)
 
 	try:
 		request = urllib2.Request(url, None, fetch_headers)
