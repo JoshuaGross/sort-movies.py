@@ -7,6 +7,7 @@
 #
 #TODO: process subdirectories of movies
 #TODO: create txt and html lists of movies: genre, actor, producer, director listings
+#TODO: manual editing of attributes
 import os, re, xattr, sys
 from datetime import *
 import time
@@ -36,10 +37,10 @@ fetch_headers = {'User-Agent' : user_agent}
 wikipedia_read_pattern = re.compile(r'^http\://en.wikipedia.org/wiki/(.*)(\?.*)?$', re.IGNORECASE)
 
 video_file_pattern = re.compile(r'(.*)\.(avi|mp4|m4v|divx|mpeg)$', re.IGNORECASE)
-director_match = re.compile(r'\|\s*director\s*\=\s*(?:\{\{Unbulleted list\|)?\s*([^\r\n]+)\s*(?:\}\})?', re.IGNORECASE)
+director_match = re.compile(r'\|\s*director\s*\=\s*(?:\{\{Unbulleted list\|\{\{ubl\||)?\s*([^\r\n]+)\s*(?:\}\})?', re.IGNORECASE)
 title_match = re.compile(r'\|\s*name\s*\=\s*([^\r\n]+)', re.IGNORECASE)
-producer_match = re.compile(r'\|\s*producer\s*\=\s*(?:\{\{Unbulleted list\|)?\s*([^\r\n]+)\s*(?:\}\})?', re.IGNORECASE)
-actor_match = re.compile(r'\|\s*starring\s*\=\s*(?:\{\{Unbulleted list\|)?\s*([^\r\n]+)\s*(?:\}\})?', re.IGNORECASE)
+producer_match = re.compile(r'\|\s*producer\s*\=\s*(?:\{\{Unbulleted list\|\{\{ubl\||)?\s*([^\r\n]+)\s*(?:\}+)?', re.IGNORECASE)
+actor_match = re.compile(r'\|\s*starring\s*\=\s*(?:\{\{Unbulleted list\|\{\{ubl\||)?\s*([^\r\n]+)\s*(?:\}+)?', re.IGNORECASE)
 year_match = re.compile(r'\|\s*released\s*\=\s*\{\{start date\|([0-9]+)\|([0-9]+)\|([0-9]+)\}\}', re.IGNORECASE) # {start date} template
 year_match2 = re.compile(r'\|\s*released\s*\=\s*[a-zA-Z]+\s*([0-9]{1,2}\,\s*)?([0-9]{4})', re.IGNORECASE) # year M D, Y
 year_match3 = re.compile(r'\|\s*released\s*\=\s*\'+\[\[.*\]\]\:\'+\s*([0-9]{1,2}\s*)?[a-zA-Z]+\s*([0-9]{1,2}\,\s*)?([0-9]{4})', re.IGNORECASE) # multiple years
@@ -52,7 +53,7 @@ disc_no_match = re.compile(r'CD([0-9]+)', re.IGNORECASE)
 # Fourth parenthesis: ]], ''', optional
 # Fifth parenthesis: same as third
 # Sixth parenthesis: end-of-name marker: br, end of line, or pipe
-name_match = re.compile(r'(\[\[|br />\s*|\'\'\'|^)([^\[\]\<\>\(\)\|]+[^\[\]\<\>\(\)\|\s\'])(\s*\([a-zA-Z]+\)\s*(\|[^\[\]\<\>]+)?)?(\'\'\'|\]\])?\s*(\([a-zA-Z]+\)\s*)?(\s*\|\s*|\&lt;|\s*$)', re.IGNORECASE)
+name_match = re.compile(r'(\[\[|br />\s*|\'\'\'|\||^)([^\[\]\<\>\(\)\|\{\}]+[^\[\]\<\>\(\)\|\{\}\s\'])(\s*\([a-zA-Z]+\)\s*(\|[^\[\]\<\>]+)?)?(\'\'\'|\]\])?\s*(\([a-zA-Z]+\)\s*)?(\s*\|\s*|\&lt;|\s*$)', re.IGNORECASE)
 
 # Common functions
 def listdir_fullpath(d):

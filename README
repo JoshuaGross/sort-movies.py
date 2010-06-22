@@ -1,0 +1,6 @@
+System requirements:
+
+- Python
+- Xattr library for Python, to access extended filesystem attributes: http://www.undefined.org/python/
+
+sort-movies.py should work on Mac OS 10.4+, Linux 2.6+ and FreeBSD 5.1+. Maybe Windows will be supported at some point, maybe.
